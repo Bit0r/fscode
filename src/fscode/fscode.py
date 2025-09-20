@@ -176,9 +176,6 @@ class FSCode:
             original_nodes = list(id2path.values())
             edges = self._parse_edited_file(tmp_path, id2path)
 
-            print(original_nodes)
-            print(edges)
-
             # 4. Call the planning algorithm
             operations = graph2operations(
                 nodes=original_nodes,
