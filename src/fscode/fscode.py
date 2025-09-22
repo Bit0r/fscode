@@ -50,27 +50,30 @@ class FSCode:
         Generates the content for the temporary TSV file.
         Returns a mapping of ID to original path and the file content string.
         """
-        id2path = {}
         tips = r"""
             # File Operation Plan
-            # Format: <ID>	<Path>
+            # Format: <ID> <Path>
             # Lines starting with '#' are ignored.
             # To delete a file, remove its line or comment it out.
             # To rename/move a file, edit its path.
             # To copy a file, add a new line with the same ID and a different path.
             # --- IMPORTANT RULES FOR SPECIAL CHARACTERS ---
             # If your filename contains characters that need to be escaped in the shell,
-            # please escape them according to the bash's rules (e.g., add quotes)."""
+            # please escape them according to the bash's rules (e.g., add quotes).
+            """
         tips = dedent(tips[1:])
         lines = [tips]
+
+        id2path = [None] * (len(file_paths) + 1)
+
         for idx, path in enumerate(file_paths, 1):
             id2path[idx] = path
             # Handle special characters in the path.
-            quoted_path = shlex.quote(path)
-            lines.append(f'{idx}\t{quoted_path}')
+            lines.append(shlex.join([str(idx), path]))
+
         return id2path, '\n'.join(lines) + '\n'
 
-    def _parse_edited_file(self, temp_file_path: Path, id2path: dict[int, str]):
+    def _parse_edited_file(self, temp_file_path: Path, id2path: list[str]):
         """
         Parses the edited temporary file to extract the desired file operations.
         """
@@ -173,7 +176,7 @@ class FSCode:
             self._console.print('[green]Editor closed. Processing changes...[/]')
 
             # 3. Parse the results
-            original_nodes = list(id2path.values())
+            original_nodes = id2path[1:]
             edges = self._parse_edited_file(tmp_path, id2path)
 
             # 4. Call the planning algorithm
