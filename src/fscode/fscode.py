@@ -33,6 +33,10 @@ class FSCode:
         # The parameter no longer needs a default value, as it will always receive a string from the run method.
         try:
             cmd_parts = shlex.split(editor_cmd)
+            if not cmd_parts:
+                self._console.print('[bold red]Error: Editor command is empty.[/]')
+                sys.exit(1)
+
             # Try to create a plumbum object from the parsed command.
             return local[cmd_parts[0]][cmd_parts[1:]]
         except CommandNotFound:
@@ -79,25 +83,26 @@ class FSCode:
         """
         edges = []
 
-        with temp_file_path.open('r') as f:
+        with temp_file_path.open() as f:
             # Use enumerate to get line numbers for better error messages
             for idx, line in enumerate(f, 1):
-                line = line.strip()
-                if not line or line.startswith('#'):
+                parts = shlex.split(line, comments=True)
+                if not parts:
                     continue
-
-                parts = line.split(maxsplit=1)
-                if len(parts) != 2:
+                elif len(parts) != 2:
                     self._console.print(
                         f'[bold red]Error:[/] Malformed line {idx}: {line}'
                     )
                     sys.exit(1)
 
-                file_id_str, quoted_path = parts
+                file_id, new_path = parts
+                file_id = int(file_id)
 
-                file_id = int(file_id_str)
-                # Restore special characters from the path.
-                new_path = shlex.split(quoted_path)[0]
+                if not (0 < file_id < len(id2path)):
+                    self._console.print(
+                        f'[bold red]Error:[/] Invalid ID {file_id} on line {idx}: {line}'
+                    )
+                    sys.exit(1)
 
                 original_path = id2path[file_id]
                 edges.append((original_path, new_path))
@@ -109,13 +114,14 @@ class FSCode:
         *paths: str,
         editor: str = os.getenv('VISUAL', os.getenv('EDITOR', 'code -w')),
         output_script: str | Path = 'file_ops.sh',
-        edit_suffix: str = '.sh',
-        rm: str = 'rm',
-        cp: str = 'cp',
-        mv: str = 'mv',
-        mv_temp_filename: str = './__mv_tmp',
-        exchange: bool = False,
-        mv_exchange: str = 'mv --exchange',
+        edit_suffix='.sh',
+        null=False,
+        rm='rm',
+        cp='cp',
+        mv='mv',
+        mv_temp_filename='./__mv_tmp',
+        exchange=False,
+        mv_exchange='mv --exchange',
         cmd_prefix: str | None = None,
     ):
         """
@@ -126,18 +132,30 @@ class FSCode:
                         Defaults to $VISUAL, $EDITOR, or 'code -w'.
         :param output_script: Path to write the generated shell script.
         :param edit_suffix: Suffix for the temporary editing file. Defaults to '.sh'.
-        :param is_exchange: Use an exchange-based move for cycles, avoiding temporary files.
+        :param null: Whether to use null-separated input.
+        :param exchange: Use an exchange-based move for cycles, avoiding temporary files.
         :param cp: The command to use for copy operations.
         :param rm: The command to use for remove operations.
         :param mv: The command to use for move operations.
-        :param mv_temp_file: Path for the temporary file used during move operations.
+        :param mv_temp_filename: Path for the temporary file used during move operations.
         :param mv_exchange: The command for atomic swap/exchange moves.
         :param cmd_prefix: An optional command prefix to prepend to all commands.
         """
         output_script_path = Path(output_script)
         input_paths = list(paths)
         if not sys.stdin.isatty():
-            input_paths.extend(line.strip() for line in sys.stdin if line.strip())
+            if null:
+                # Using the '\0' delimiter prevents stream reading; the entire input must be read at once.
+                stdin_content = sys.stdin.buffer.read().decode(errors='surrogateescape')
+                stdin_paths = [p for p in stdin_content.strip('\0').split('\0') if p]
+            else:
+                # We can't use shlex.split here, only line.rstrip, because shlex.split would separate paths with spaces.
+                # We use rstrip instead of strip because we only want to remove trailing \r or \n.
+                stdin_paths = [
+                    line.rstrip('\r\n') for line in sys.stdin if line.rstrip('\r\n')
+                ]
+
+            input_paths.extend(stdin_paths)
 
         if not input_paths:
             self._console.print(
@@ -145,12 +163,18 @@ class FSCode:
             )
             return
 
+        # Split commands into lists
+        cmds = [mv, cp, rm, mv_exchange]
         if cmd_prefix:
-            # Prepend the command prefix to all commands
-            mv = f'{cmd_prefix} {mv}'
-            cp = f'{cmd_prefix} {cp}'
-            rm = f'{cmd_prefix} {rm}'
-            mv_exchange = f'{cmd_prefix} {mv_exchange}'
+            cmd_prefix = shlex.split(cmd_prefix, comments=True)
+        for i, cmd in enumerate(cmds):
+            cmd = shlex.split(cmd, comments=True)
+            if cmd_prefix:
+                cmd = [*cmd_prefix, *cmd]
+            # Update the command in the list
+            cmds[i] = cmd
+        # Unpack the commands
+        mv, cp, rm, mv_exchange = cmds
 
         id2path, temp_content = self._generate_temp_file_content(input_paths)
 
@@ -159,7 +183,9 @@ class FSCode:
             tmp_fd, tmp_path_str = tempfile.mkstemp(suffix=edit_suffix, text=True)
             tmp_path = Path(tmp_path_str)
 
-            tmp_path.write_text(temp_content)
+            # Write to the file and then close it to ensure the content is flushed to disk.
+            with tmp_path.open('w') as f:
+                f.write(temp_content)
 
             # 2. Open in editor
             editor_cmd = self._get_editor(editor)
@@ -184,11 +210,11 @@ class FSCode:
                 nodes=original_nodes,
                 edges=edges,
                 tmp_name=mv_temp_filename,
-                mv=shlex.split(mv),
-                cp=shlex.split(cp),
-                rm=shlex.split(rm),
+                mv=mv,
+                cp=cp,
+                rm=rm,
                 is_exchange=exchange,
-                mv_exchange=shlex.split(mv_exchange),
+                mv_exchange=mv_exchange,
             )
 
             # 5. Generate and write script
