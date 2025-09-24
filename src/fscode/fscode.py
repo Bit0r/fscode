@@ -180,12 +180,11 @@ class FSCode:
 
         try:
             # Create a temporary file that we control
-            tmp_fd, tmp_path_str = tempfile.mkstemp(suffix=edit_suffix, text=True)
+            _, tmp_path_str = tempfile.mkstemp(suffix=edit_suffix, text=True)
             tmp_path = Path(tmp_path_str)
 
             # Write to the file and then close it to ensure the content is flushed to disk.
-            with tmp_path.open('w') as f:
-                f.write(temp_content)
+            tmp_path.write_text(temp_content)
 
             # 2. Open in editor
             editor_cmd = self._get_editor(editor)
@@ -239,8 +238,6 @@ class FSCode:
 
         finally:
             # 6. Clean up the temporary file
-            if 'tmp_fd' in locals() and tmp_fd:
-                os.close(tmp_fd)
             if 'tmp_path' in locals() and tmp_path and tmp_path.exists():
                 tmp_path.unlink()
                 self._console.print(f'Cleaned up temporary file: [cyan]{tmp_path}[/]')
