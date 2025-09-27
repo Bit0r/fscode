@@ -11,7 +11,7 @@ import fire
 from plumbum import CommandNotFound, local
 from rich.console import Console
 
-from .plan import graph2operations
+from .plan import GraphOperationGenerator
 
 
 class FSCode:
@@ -206,15 +206,17 @@ class FSCode:
             edges = self._parse_edited_file(tmp_path, origin_nodes)
 
             # 4. Call the planning algorithm
-            operations = graph2operations(
+            ops_gen = GraphOperationGenerator(
                 nodes=origin_nodes,
                 edges=edges,
-                tmp_name=move_tmp_filename,
                 remove=remove,
                 create=create,
                 move=move,
                 copy=copy,
                 exchange=exchange,
+            )
+            operations = ops_gen.generate_operations(
+                tmp_name=move_tmp_filename,
                 is_exchange=is_exchange,
             )
 
