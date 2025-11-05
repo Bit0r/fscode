@@ -9,6 +9,7 @@ from textwrap import dedent
 
 import fire
 from plumbum import CommandNotFound, local
+from fastnanoid import generate
 from rich.console import Console
 
 from .plan import GraphOperationGenerator
@@ -61,6 +62,7 @@ class FSCode:
             # To delete a file, remove its line or comment it out.
             # To create a new file, add a new line with ID 0.
             # To rename/move a file, edit its path.
+            # To swap files, swap their ids.
             # To copy a file, add a new line with the same ID and a different path.
             # --- IMPORTANT RULES FOR SPECIAL CHARACTERS ---
             # If your filename contains characters that need to be escaped in the shell,
@@ -122,7 +124,7 @@ class FSCode:
         move='mv',
         create='touch',
         exchange='mv --exchange',
-        move_tmp_filename='./__mv_tmp',
+        move_tmp_filename: str | None = None,
         is_exchange=False,
         cmd_prefix: str | None = None,
     ):
@@ -138,9 +140,9 @@ class FSCode:
         :param copy: The command to use for copy operations.
         :param remove: The command to use for remove operations.
         :param move: The command to use for move operations.
-        :param exchange: The command for atomic swap/exchange moves.
-        :param move_tmp_filename: Path for the temporary file used during move operations.
-        :param is_exchange: Use an exchange-based move for cycles, avoiding temporary files.
+        :param exchange: The command to atomically swap filenames. If you modify to a custom command, is_exchange is automatically enabled.
+        :param move_tmp_filename: Path for the temporary filename used during cycle move operations.
+        :param is_exchange: Use swap for circular moves and avoid using temporary files. Currently only higher versions of linux are supported.
         :param cmd_prefix: An optional command prefix to prepend to all commands.
         """
         output_script_path = Path(output_script)
@@ -164,6 +166,13 @@ class FSCode:
                 '[bold yellow]No input file paths provided. Exiting.[/]'
             )
             return
+
+        # When the set --exchange parameters, auto enable --is_exchange.
+        if exchange != 'mv --exchange' and not is_exchange:
+            self._console.print(
+                f"[yellow][NOTE]: --exchange set to '{exchange}'. Automatically enabling --is_exchange=True.[/]"
+            )
+            is_exchange = True
 
         # Split commands into lists
         cmds = [remove, create, copy, move, exchange]
@@ -216,7 +225,7 @@ class FSCode:
                 exchange=exchange,
             )
             operations = ops_gen.generate_operations(
-                tmp_name=move_tmp_filename,
+                tmp_name=move_tmp_filename or f'./__tmp__{generate(size=8)}',
                 is_exchange=is_exchange,
             )
 

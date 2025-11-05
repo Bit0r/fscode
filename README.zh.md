@@ -1,4 +1,4 @@
-# 🧩 FSCode (Filename Studio Code) — Manage Your Filesystem with Your Editor
+# 🧩 FSCode (Filename Studio Code) — 用你的编辑器管理文件系统
 
 [![English](https://img.shields.io/badge/English-blue.svg?style=flat-square)](README.md)
 [![简体中文](https://img.shields.io/badge/简体中文-brightgreen.svg?style=flat-square)](README.zh.md)
@@ -7,84 +7,84 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-default.svg)](https://opensource.org/licenses/MIT)
 [![GitHub Stars](https://img.shields.io/github/stars/bit0r/fscode)](https://github.com/Bit0r/fscode)
 
-> Turn your VS Code / Vim into a file operations IDE.
-> Generate safe, reviewable batch scripts (move/rename/copy/delete, etc.) from a "visual manifest".
+> 把你的 VS Code / Vim 变成文件操作 IDE。
+> 从“可视化清单”生成安全可审查的批处理脚本（移动/重命名/复制/删除等）。
 
-## 🏁 Quick Start
+## 🏁 快速开始
 
 ```bash
 pip install fscode
 find ./photos -name "*.jpg" | fscode --editor='code -w' *.txt
 ```
 
-## ⚡️ Video Demo
+## ⚡️ 视频演示
 
-[Video Demo](https://github.com/user-attachments/assets/46c63430-722d-4031-a316-0c0477c36a8b)
+![演示视频](https://github.com/user-attachments/assets/46c63430-722d-4031-a316-0c0477c36a8b)
 
-## 🤔 Why This Tool?
+## 🤔 为什么会有这个工具？
 
-Batch file operations (rename / move / delete) are the most common yet error-prone tasks in the command-line world:
+批量文件操作（重命名 / 移动 / 删除）是命令行世界最常见但最易出错的任务：
 
-- `mv`, `cp`, `rm` commands are very clumsy and error-prone for **batch** operations.
-- Manually writing `for` loops and `sed` for renaming carries a heavy mental load.
-- **Swapping filenames** is very complex and often impossible even in a GUI.
+- `mv`, `cp`, `rm` 命令对于**批量**操作非常笨拙且容易出错。
+- 手写 `for` 循环和 `sed` 来重命名，心智负担很重。
+- **交换文件名**非常复杂，甚至在GUI下都无法完成操作。
 
-`fscode` provides a more powerful and unified solution.
+`fscode` 提供了一个更强大、更统一的解决方案。
 
-## 🚀 What Can It Do?
+## 🚀 它能做什么？
 
-`fscode` lets you use your editor to plan batch file operations and safely generate a script for execution.
+`fscode` 让你用编辑器批量规划文件操作，并安全生成脚本执行。
 
-## ✨ Core Features
+## ✨ 核心功能
 
-- 🧭 **Editor as UI** — Use the powerful features of VS Code/Vim (multi-cursor, regex, macros) to manage files;
-- 🧱 **Smart Dependency Handling** — Automatically resolves swap, cycle, and move conflicts;
-- 🪶 **Safe and Controllable** — Does not modify files directly, only generates a reviewable file operation script;
-- 💡 **Full Operation Support** — Supports creation, copying, moving, deleting, and renaming.
-- **Custom Commands** - For example, you can replace `touch` with `ai-generate` to create files with content.
-- **Custom Command Prefix** - For example, you can use `sudo` as a prefix for the output script.
+- 🧭 **编辑器即 UI** — 用 VS Code/Vim 的强大功能（多光标、正则、宏）管理文件；
+- 🧱 **智能依赖处理** — 自动解决交换、循环、移动冲突；
+- 🪶 **安全可控** — 不直接修改文件，只生成一个可审查的文件操作脚本；
+- 💡 **全类型支持** — 创建、复制、移动、删除、重命名都支持。
+- **自定义命令** - 例如，你可以使用 `ai-generate` 替换 `touch`，创建有内容的文件。
+- **自定义命令前缀** - 例如，你可以将 `sudo` 作为输出脚本的前缀。
 
-# 📦 Installation
+# 📦 安装
 
 ```bash
 pip install fscode
-# Or using uv
+# 或使用 uv
 uv tool install fscode
 ```
 
-# 🧑‍💻 Usage Example
+# 🧑‍💻 使用示例
 
-## 💻 Step 1: Input Files from Command Line
+## 💻 第1步-命令行输入文件
 
-⚠️ [NOTE]: If your `$VISUAL` or `$EDITOR` environment variable points to VS Code, please use `--editor='code -w'` to wait for the window to close before continuing.
+⚠️ [NOTE]：如果你的环境变量 `$VISUAL` 或 `$EDITOR` 指向 VS Code，请使用 `--editor='code -w'` 以等待窗口关闭再继续。
 
-### Method 1: Input from Pipe
+### 方式1：从管道输入
 
 ```bash
 find ./photos -name "*.jpg" | fscode
 ```
 
-### Method 2: Pass as Arguments
+### 方式2：直接传参
 
 ```bash
 fscode *.jpg *.txt
 ```
 
-### Method 3: Pipe + Arguments
+### 方式3：管道+传参
 
 ```bash
 find ./photos -name "*.jpg" | fscode *.jpg *.txt
 ```
 
-### Method 4: Use Custom Commands (Advanced Users)
+### 方式4：使用自定义命令操作（高级用户）
 
 ```bash
 fscode --is_exchange --editor='code -w' --create='new' --remove='del' --move='mov' *.jpg
 ```
 
-## 📄 Step 2: Modify Filenames in the Editor
+## 📄 第2步-编辑器内修改文件名
 
-The editor will open a file similar to this:
+编辑器会打开一个类似的文件：
 
 ```sh
 # <ID> <Path>
@@ -94,34 +94,34 @@ The editor will open a file similar to this:
 4 "photos/old picture.jpg"
 ```
 
-You just need to modify it:
+你只需修改它：
 
 ```sh
-# File Operation Plan
-# ... (comments omitted) ...
+# 文件操作计划
+# ... (省略注释) ...
 #
-# My Modifications
+# 我的修改
 
-# 1. Rename (Edit the path)
+# 1. 重命名 (编辑路径)
 1 photos/Paris_Vacation_2025.jpg
 
-# 2. Move (Edit the path)
+# 2. 移动 (编辑路径)
 3 archive/old_notes.txt
 
-# 3. Copy (Duplicate the line, use the same ID 2)
+# 3. 复制 (复制行，使用相同 ID 2)
 2 photos/birthday.jpg
 2 photos/backup_birthday.jpg
 
-# 4. Delete (Delete or comment out the line with ID 4)
+# 4. 删除 (删除或注释 ID 4 对应的行)
 # 4 "photos/old picture.jpg"
 
-# 5. Create (Add a new line, ID is 0, quotes are needed due to spaces)
+# 5. 创建 (添加新行，ID 为 0，因为有空格所以需要使用引号)
 0 "new_project/new note.txt"
 ```
 
-## ⚡ Step 3: Execute
+## ⚡ 第3步: 执行
 
-After saving and closing the editor, FSCode will generate a script:
+保存并关闭后编辑器，FSCode会生成脚本：
 
 ```bash
 #!/bin/sh
@@ -132,15 +132,15 @@ mv project/notes.txt archive/old_notes.txt
 rm "photos/old picture.jpg"
 ```
 
-After reviewing it for correctness, execute it:
+审查无误后，执行它：
 
 ```bash
 source ./file_ops.sh
 ```
 
-✅ All changes can be safely reviewed before execution.
+✅ 所有变更在执行前都可安全审查。
 
-# 📄 Help Documentation
+# 📄 帮助文档
 
 ```
 INFO: Showing help with the command 'fscode -- --help'.
@@ -201,32 +201,33 @@ FLAGS
         An optional command prefix to prepend to all commands.
 ```
 
-# 🌈 Other Recommended Tools
+# 🌈 其它推荐工具
 
 - [human-utils](https://github.com/xixixao/human-utils)
 - [fd](https://github.com/sharkdp/fd)
 
-## 🐟 fish alias example
+## 🐟 fish 脚本 alias 示例
 
 ```sh
 alias -s fscode "fscode --is_exchange --editor='code -w' --create='new
 ' --remove='del' --move='mov'"
 ```
 
-# Appendix
+# 附录
 
-## 🔗 Similar Projects
+## 🔗 类似项目
 
 - [edir](https://github.com/bulletmark/edir)
 - [renameutils](https://www.nongnu.org/renameutils/)
 - [pipe-rename](https://github.com/marcusbuffett/pipe-rename)
 - [up](https://github.com/akavel/up)
 
-## 📄 License
 
-This project is open-sourced under the [MIT License](https://www.google.com/search?q=LICENSE.txt).
+## 📄 许可
 
-## 🪶 Tips
+本项目基于 [MIT License](LICENSE.txt) 开源。
 
-> Like this project? Please give it a ⭐️ Star.
-> Your support helps more people discover it.
+## 🪶 小贴士
+
+> 喜欢这个项目？请给它一个 ⭐️ Star。
+> 你的支持能让更多人发现它。

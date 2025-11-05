@@ -3,22 +3,27 @@ from pathlib import Path
 import networkx as nx
 from more_itertools import flatten
 
-# [TODO]: 一种更高效的方法是交换阶段二和阶段三，但是手写代码容易出错，所以暂不实现
-# 具体方法如下：
-# 1. 在阶段二中，构建一个排除独立节点和自环节点的反图，使用 Kahn 算法该图进行拓扑排序。
-#    1. 如果算法成功完成，则可以直接得到一个有效的拓扑排序，说明不存在环。
-#    2. 如果算法在运行中发现入度列表中已经不存在入度为 0 的节点，则这些剩余未处理的节点都在环中。
-# 2. 在阶段三中，在正向图中删除前面已经处理过的节点
-#    然后使用DFS算法对剩余节点进行遍历，每个连通分量都是一个环。
-#    因为该图的入度<=1，所以不存在环交叉。
+# [TODO]: A more efficient method is to swap stages two and three, but writing the code by hand is error-prone,
+# so it is not implemented for now.
+# The specific method is as follows:
+# 1. In stage two, build a reverse graph excluding isolated nodes and self-loop nodes,
+#    and perform a topological sort on this graph using Kahn's algorithm.
+#    1. If the algorithm completes successfully, a valid topological sort can be obtained directly,
+#       indicating no cycles exist.
+#    2. If the algorithm finds during execution that there are no longer any nodes with an in-degree of 0
+#       in the in-degree list, then all remaining unprocessed nodes are in cycles.
+# 2. In stage three, remove the previously processed nodes from the forward graph.
+#    Then, traverse the remaining nodes using a DFS algorithm. Each connected component will be a cycle.
+#    Because the in-degree of this graph is <= 1, there are no intersecting cycles.
 
 
 class GraphOperationGenerator:
     """
-    分析一个特殊的有向图（所有节点入度<=1），并将其结构直接转换为
-    一个包含抽象的 'remove', 'create', 'copy', 'move', 'exchange' 操作的指令列表。
+    Analyzes a special directed graph (all nodes have in-degree <= 1) and directly converts its structure
+    into a list of instructions containing abstract 'remove', 'create', 'copy', 'move', and 'exchange' operations.
 
-    通过实例化此类来初始化图结构，然后调用 `generate_operations` 方法生成指令。
+    Instantiate this class to initialize the graph structure, then call the `generate_operations`
+    method to generate the instructions.
     """
 
     def __init__(
@@ -33,19 +38,21 @@ class GraphOperationGenerator:
         create: tuple[str, ...] = ('touch',),
     ):
         """
-        初始化图并进行基本验证。
+        Initializes the graph and performs basic validation.
 
         Args:
-            nodes: 图中所有节点的列表。
-            edges: 图中所有边的列表，以 (u, v) 元组表示从 u 到 v 的边。
-            remove: 用于移除操作的命令元组。
-            copy: 用于复制操作的命令元组。
-            move: 用于移动操作的命令元组。
-            exchange: 用于交换操作的命令元组。
-            create: 用于创建操作的命令元组。
+            nodes: A list of all nodes in the graph.
+            edges: A list of all edges in the graph, as (u, v) tuples
+                   representing an edge from u to v.
+            remove: The command tuple for the remove operation.
+            copy: The command tuple for the copy operation.
+            move: The command tuple for the move operation.
+            exchange: The command tuple for the exchange operation.
+            create: The command tuple for the create operation.
 
         Raises:
-            ValueError: 如果图中存在入度大于1的节点，或者 '' 节点有入度。
+            ValueError: If any node in the graph has an in-degree greater than 1,
+                        or if the '' node has an in-degree.
         """
         self.remove_cmd = remove
         self.copy_cmd = copy
@@ -62,19 +69,19 @@ class GraphOperationGenerator:
         self._classify_nodes()
 
     def _validate_graph(self):
-        """验证图是否符合所有节点入度 <= 1 的要求。"""
+        """Validates if the graph meets the requirement that all nodes have an in-degree <= 1."""
         for node, in_degree in self.DG.in_degree:
             if in_degree > 1:
-                msg = f"输入图不符合要求：节点 '{node}' 的入度为 {in_degree}，超过了1的限制。"
+                msg = f"Input graph does not meet requirements: Node '{node}' has an in-degree of {in_degree}, which exceeds the limit of 1."
                 raise ValueError(msg)
         if self.DG.in_degree[''] > 0:
-            msg = f"输入图不符合要求：节点 '' 的入度为 {self.DG.in_degree['']}，超过了0的限制。"
+            msg = f"Input graph does not meet requirements: Node '' has an in-degree of {self.DG.in_degree['']}, which exceeds the limit of 0."
             raise ValueError(msg)
 
     def _classify_nodes(self):
-        """对图中的节点进行分类：创建、隔离、自环、环内、普通路径。"""
+        """Classifies nodes in the graph: created, isolated, self-loop, in-cycle, and normal path."""
         self.created_nodes = set(self.DG.successors(''))
-        # 如果没有创建节点，则将''清除防止后续处理出错
+        # If there are no created nodes, remove '' to prevent errors in subsequent processing
         if not self.created_nodes:
             self.DG.remove_node('')
 
@@ -92,19 +99,19 @@ class GraphOperationGenerator:
 
         classified_nodes |= set(flatten(self.cycles))
 
-        # 排除所有特殊节点后，得到普通路径节点集合
+        # After excluding all special nodes, we get the set of normal path nodes
         self.normal_nodes_set = set(self.DG.nodes()) - classified_nodes - {''}
 
     def _generate_remove_operations(self) -> list[list[str]]:
-        """生成处理孤立节点的操作 -> remove"""
+        """Generates operations for isolated nodes -> remove"""
         return [[*self.remove_cmd, node] for node in sorted(self.isolated_nodes)]
 
     def _generate_create_operations(self) -> list[list[str]]:
-        """生成处理创建节点的操作 -> create"""
+        """Generates operations for created nodes -> create"""
         return [[*self.create_cmd, node] for node in sorted(self.created_nodes)]
 
     def _generate_path_operations(self) -> list[list[str]]:
-        """生成处理普通路径节点的操作 -> move 或 copy"""
+        """Generates operations for normal path nodes -> move or copy"""
         operations = []
         normal_nodes_subgraph = self.DG.subgraph(self.normal_nodes_set)
         reversed_subgraph = normal_nodes_subgraph.reverse(copy=True)
@@ -130,41 +137,43 @@ class GraphOperationGenerator:
     def _generate_cycle_operations(
         self, is_exchange: bool, tmp_name: str
     ) -> list[list[str]]:
-        """生成处理环中节点的操作 -> move (使用临时变量) 或 exchange"""
+        """Generates operations for nodes in cycles -> move (using a temporary variable) or exchange"""
         if not self.cycles:
             return []
 
-        operations = [['#', '开始处理环路']]
+        operations = [['#', 'Start processing cycles']]
         for idx, cycle in enumerate(self.cycles, 1):
-            operations.append(['#', f'处理环路{idx}:', *cycle])
+            operations.append(['#', f'Processing cycle {idx}:', *cycle])
 
             if is_exchange:
-                # 使用交换操作，本质是单趟冒泡排序
+                # Use exchange operation, essentially a single-pass bubble sort
                 for i in range(len(cycle) - 2, -1, -1):
                     operations.append([*self.exchange_cmd, cycle[i], cycle[i + 1]])
             else:
-                # 使用临时节点
+                # Use temporary node
                 temp_node = str(Path(tmp_name).expanduser())
                 operations.append([*self.move_cmd, cycle[-1], temp_node])
                 for i in range(len(cycle) - 2, -1, -1):
                     operations.append([*self.move_cmd, cycle[i], cycle[i + 1]])
                 operations.append([*self.move_cmd, temp_node, cycle[0]])
 
-        operations.append(['#', f'共{len(self.cycles)}个环路'])
+        operations.append(['#', f'Total of {len(self.cycles)} cycles'])
         return operations
 
     def generate_operations(
         self, *, is_exchange: bool = False, tmp_name: str = '__mv_tmp'
     ) -> list[list[str]]:
         """
-        生成所有操作指令的最终列表。
+        Generates the final list of all operation instructions.
 
         Args:
-            is_exchange: 是否使用交换操作处理环路。默认为 False。
-            tmp_name: 当不使用交换操作时，用于处理环路的临时名称。
+            is_exchange: Whether to use the exchange operation to handle cycles.
+                         Defaults to False.
+            tmp_name: The temporary name to use when not using the exchange
+                      operation for cycles.
 
         Returns:
-            一个包含所有操作指令的列表。
+            A list containing all operation instructions.
         """
         return [
             *self._generate_remove_operations(),
@@ -179,32 +188,32 @@ if __name__ == '__main__':
     edge_list = [
         ('a', 'b'),
         ('b', 'c'),
-        ('c', 'a'),  # 环: a -> b -> c -> a
-        ('c', 'd'),  # 分支
-        ('d', 'e'),  # 路径
+        ('c', 'a'),  # Cycle: a -> b -> c -> a
+        ('c', 'd'),  # Branch
+        ('d', 'e'),  # Path
         ('f', 'g'),
-        ('g', 'f'),  # 环: f -> g -> f
-        ('f', 'h'),  # 分支
-        ('i', 'i'),  # 自环 (会被分类，但不会生成操作)
-        ('', 'x'),  # 创建
-        ('', 'y'),  # 创建
-        # 'j' 是孤立节点
+        ('g', 'f'),  # Cycle: f -> g -> f
+        ('f', 'h'),  # Branch
+        ('i', 'i'),  # Self-loop (will be classified, but no operation generated)
+        ('', 'x'),  # Create
+        ('', 'y'),  # Create
+        # 'j' is an isolated node
     ]
 
-    # --- 实例化并生成操作 ---
+    # --- Instantiate and generate operations ---
     op_generator = GraphOperationGenerator(all_nodes, edge_list)
 
-    # 1. 使用临时变量处理环路 (is_exchange=False)
+    # 1. Process cycles using a temporary variable (is_exchange=False)
     print('=' * 40)
-    print('生成的操作指令 (使用临时变量):')
+    print('Generated operations (using temporary variable):')
     print('=' * 40)
     final_ops_mv = op_generator.generate_operations(is_exchange=False)
     for op in final_ops_mv:
         print(op)
 
-    # 2. 使用交换操作处理环路 (is_exchange=True)
+    # 2. Process cycles using exchange operation (is_exchange=True)
     print('\n' + '=' * 40)
-    print('生成的操作指令 (使用交换操作):')
+    print('Generated operations (using exchange operation):')
     print('=' * 40)
     final_ops_exchange = op_generator.generate_operations(is_exchange=True)
     for op in final_ops_exchange:

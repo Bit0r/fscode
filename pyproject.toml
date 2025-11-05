@@ -1,11 +1,18 @@
 [project]
-    name            = "fscode"
-    version         = "0.2.1"
-    description     = "Filename Studio Code"
-    readme          = "README.md"
-    authors         = [{ name = "Bit0r", email = "nie_wang@outlook.com" }]
+    name = "FSCode"
+    version = "0.3.1"
+    description = "Filename Studio Code"
+    readme = "README.md"
+    authors = [{ name = "Bit0r", email = "nie_wang@outlook.com" }]
     requires-python = ">=3.13"
-    dependencies    = ["fire", "plumbum", "rich", "more-itertools", "networkx"]
+    dependencies = [
+        "fire",
+        "plumbum",
+        "rich",
+        'fastnanoid',
+        "more-itertools",
+        "networkx",
+    ]
 
     [project.scripts]
         fscode = "fscode.fscode:main"
