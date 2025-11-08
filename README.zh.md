@@ -209,8 +209,7 @@ FLAGS
 ## 🐟 fish 脚本 alias 示例
 
 ```sh
-alias -s fscode "fscode --is_exchange --editor='code -w' --create='new
-' --remove='del' --move='mov'"
+alias -s fscode "fscode --is_exchange --editor='code -w' --create='new' --remove='del' --move='mov'"
 ```
 
 # 附录

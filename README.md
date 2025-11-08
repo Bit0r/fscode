@@ -209,8 +209,7 @@ FLAGS
 ## 🐟 fish alias example
 
 ```sh
-alias -s fscode "fscode --is_exchange --editor='code -w' --create='new
-' --remove='del' --move='mov'"
+alias -s fscode "fscode --is_exchange --editor='code -w' --create='new' --remove='del' --move='mov'"
 ```
 
 # Appendix
