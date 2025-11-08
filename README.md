@@ -223,7 +223,7 @@ alias -s fscode "fscode --is_exchange --editor='code -w' --create='new' --remove
 
 ## 📄 License
 
-This project is open-sourced under the [MIT License](https://www.google.com/search?q=LICENSE.txt).
+This project is open-sourced under the [MIT License](LICENSE.txt).
 
 ## 🪶 Tips
 
