@@ -3,7 +3,7 @@
 [![English](https://img.shields.io/badge/English-blue.svg?style=flat-square)](README.md)
 [![简体中文](https://img.shields.io/badge/简体中文-brightgreen.svg?style=flat-square)](README.zh.md)
 
-[![PyPI](https://img.shields.io/badge/pypi-FSCode-blue.svg)](https://pypi.org/project/fscode/)
+[![PyPI](https://img.shields.io/badge/pypi-PyFSCode-blue.svg)](https://pypi.org/project/fscode/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-default.svg)](https://opensource.org/licenses/MIT)
 [![GitHub Stars](https://img.shields.io/github/stars/bit0r/fscode)](https://github.com/Bit0r/fscode)
 
@@ -13,7 +13,7 @@
 ## 🏁 快速开始
 
 ```bash
-pip install fscode
+pip install PyFSCode
 find ./photos -name "*.jpg" | fscode --editor='code -w' *.txt
 ```
 
@@ -47,9 +47,9 @@ find ./photos -name "*.jpg" | fscode --editor='code -w' *.txt
 # 📦 安装
 
 ```bash
-pip install fscode
+pip install PyFSCode
 # 或使用 uv
-uv tool install fscode
+uv tool install PyFSCode
 ```
 
 # 🧑‍💻 使用示例
