@@ -1,7 +1,8 @@
+import enum
 from pathlib import Path
 
 import networkx as nx
-from more_itertools import flatten
+from more_itertools import collapse
 
 # [TODO]: A more efficient method is to swap stages two and three, but writing the code by hand is error-prone,
 # so it is not implemented for now.
@@ -15,6 +16,12 @@ from more_itertools import flatten
 # 2. In stage three, remove the previously processed nodes from the forward graph.
 #    Then, traverse the remaining nodes using a DFS algorithm. Each connected component will be a cycle.
 #    Because the in-degree of this graph is <= 1, there are no intersecting cycles.
+
+
+class TokenType(enum.Enum):
+    SRC = enum.auto()
+    TGT = enum.auto()
+    ARGS = enum.auto()
 
 
 class GraphOperationGenerator:
@@ -36,6 +43,7 @@ class GraphOperationGenerator:
         move: tuple[str, ...] = ('mv',),
         exchange: tuple[str, ...] = ('mv', '--exchange'),
         create: tuple[str, ...] = ('touch',),
+        create_args: tuple[str, ...] = ('ln', '-snT'),
     ):
         """
         Initializes the graph and performs basic validation.
@@ -43,22 +51,24 @@ class GraphOperationGenerator:
         Args:
             nodes: A list of all nodes in the graph.
             edges: A list of all edges in the graph, as (u, v) tuples
-                   representing an edge from u to v.
+                    representing an edge from u to v.
             remove: The command tuple for the remove operation.
             copy: The command tuple for the copy operation.
             move: The command tuple for the move operation.
             exchange: The command tuple for the exchange operation.
             create: The command tuple for the create operation.
+            create_args: The command tuple for create operation with arguments.
 
         Raises:
             ValueError: If any node in the graph has an in-degree greater than 1,
-                        or if the '' node has an in-degree.
+                    or if the '' node has an in-degree.
         """
         self.remove_cmd = remove
         self.copy_cmd = copy
         self.move_cmd = move
         self.exchange_cmd = exchange
         self.create_cmd = create
+        self.create_args_cmd = create_args
 
         self.DG = nx.DiGraph()
         self.DG.add_nodes_from(nodes)
@@ -80,27 +90,27 @@ class GraphOperationGenerator:
 
     def _classify_nodes(self):
         """Classifies nodes in the graph: created, isolated, self-loop, in-cycle, and normal path."""
-        self.created_nodes = set(self.DG.successors(''))
-        # If there are no created nodes, remove '' to prevent errors in subsequent processing
-        if not self.created_nodes:
-            self.DG.remove_node('')
+        # Process the creation of nodes first,
+        # and then delete this part from the graph
+        # to prevent interference with subsequent processing.
+        created_nodes = set(self.DG.successors('')) | {''}
+        self.creates_nodes_subgraph = self.DG.subgraph(created_nodes).copy()
+        self.DG.remove_nodes_from(created_nodes)
 
         self.isolated_nodes = set(nx.isolates(self.DG))
         self.self_loop_nodes = set(nx.nodes_with_selfloops(self.DG))
 
-        classified_nodes = (
-            self.isolated_nodes | self.created_nodes | self.self_loop_nodes
-        )
+        classified_nodes = self.isolated_nodes | self.self_loop_nodes
 
-        nodes_for_cycle_search = self.DG.subgraph(
+        cycles_search_subgraph = self.DG.subgraph(
             set(self.DG.nodes()) - classified_nodes
         )
-        self.cycles = sorted(nx.simple_cycles(nodes_for_cycle_search))
+        self.cycles = sorted(map(sorted, nx.simple_cycles(cycles_search_subgraph)))
 
-        classified_nodes |= set(flatten(self.cycles))
+        classified_nodes |= set(collapse(self.cycles))
 
         # After excluding all special nodes, we get the set of normal path nodes
-        self.normal_nodes_set = set(self.DG.nodes()) - classified_nodes - {''}
+        self.normal_nodes_set = set(self.DG.nodes()) - classified_nodes
 
     def _generate_remove_operations(self) -> list[list[str]]:
         """Generates operations for isolated nodes -> remove"""
@@ -108,7 +118,15 @@ class GraphOperationGenerator:
 
     def _generate_create_operations(self) -> list[list[str]]:
         """Generates operations for created nodes -> create"""
-        return [[*self.create_cmd, node] for node in sorted(self.created_nodes)]
+        operations = []
+        for node in self.creates_nodes_subgraph['']:
+            edge_data = self.creates_nodes_subgraph[''][node]
+            if edge_data.get('args'):
+                operation = [*self.create_args_cmd, *edge_data['args'], node]
+            else:
+                operation = [*self.create_cmd, node]
+            operations.append(operation)
+        return operations
 
     def _generate_path_operations(self) -> list[list[str]]:
         """Generates operations for normal path nodes -> move or copy"""
@@ -168,18 +186,18 @@ class GraphOperationGenerator:
 
         Args:
             is_exchange: Whether to use the exchange operation to handle cycles.
-                         Defaults to False.
+                    Defaults to False.
             tmp_name: The temporary name to use when not using the exchange
-                      operation for cycles.
+                    operation for cycles.
 
         Returns:
             A list containing all operation instructions.
         """
         return [
             *self._generate_remove_operations(),
-            *self._generate_create_operations(),
             *self._generate_path_operations(),
             *self._generate_cycle_operations(is_exchange, tmp_name),
+            *self._generate_create_operations(),
         ]
 
 
@@ -190,12 +208,13 @@ if __name__ == '__main__':
         ('b', 'c'),
         ('c', 'a'),  # Cycle: a -> b -> c -> a
         ('c', 'd'),  # Branch
+        ('d', 'd1'),  # Branch
         ('d', 'e'),  # Path
         ('f', 'g'),
         ('g', 'f'),  # Cycle: f -> g -> f
         ('f', 'h'),  # Branch
         ('i', 'i'),  # Self-loop (will be classified, but no operation generated)
-        ('', 'x'),  # Create
+        ('', 'x', {'args': ['xxx']}),  # Create
         ('', 'y'),  # Create
         # 'j' is an isolated node
     ]

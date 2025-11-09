@@ -1,6 +1,6 @@
 [project]
     name = "PyFSCode"
-    version = "0.3.1"
+    version = "1.0.0"
     description = "Filename Studio Code"
     readme = "README.md"
     authors = [{ name = "Bit0r", email = "nie_wang@outlook.com" }]
@@ -29,3 +29,6 @@
     url         = "https://test.pypi.org/simple/"
     publish-url = "https://test.pypi.org/legacy/"
     explicit    = true
+
+[dependency-groups]
+    dev = ["pytest"]
