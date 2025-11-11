@@ -1,4 +1,4 @@
-# 🧩 FSCode (Filename Studio Code) — 用你的编辑器管理文件系统
+# 🧩 FSCode (Filename Studio Code) — 用你的编辑器管理文件
 
 [![English](https://img.shields.io/badge/English-blue.svg?style=flat-square)](README.md)
 [![简体中文](https://img.shields.io/badge/简体中文-brightgreen.svg?style=flat-square)](README.zh.md)
