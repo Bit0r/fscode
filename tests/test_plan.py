@@ -92,6 +92,7 @@ def test_classify_nodes_self_loop(main_generator):
     assert main_generator.self_loop_nodes == {'i'}
 
 
+# May not pass CI, as topological sort is a partial order
 def test_classify_nodes_cycles(main_generator):
     """Test classification of "cycle" nodes (based on sorted results)"""
     # The output order of networkx.simple_cycles can be non-deterministic, but sorted() in the code guarantees order
@@ -234,6 +235,7 @@ def test_generate_ops_path_with_copy():
     assert op_contents == [['a', 'b'], ['a', 'c']]
 
 
+# May not pass CI, as topological sort is a partial order
 def test_generate_ops_custom_commands():
     """Test if custom commands from __init__ are used correctly"""
     custom_cmds = {

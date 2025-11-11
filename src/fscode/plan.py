@@ -105,7 +105,7 @@ class GraphOperationGenerator:
         cycles_search_subgraph = self.DG.subgraph(
             set(self.DG.nodes()) - classified_nodes
         )
-        self.cycles = sorted(map(sorted, nx.simple_cycles(cycles_search_subgraph)))
+        self.cycles = sorted(nx.simple_cycles(cycles_search_subgraph))
 
         classified_nodes |= set(collapse(self.cycles))
 
@@ -202,10 +202,13 @@ class GraphOperationGenerator:
 
 
 if __name__ == '__main__':
-    all_nodes = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j']
+    all_nodes = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'a1', 'b1', 'c1']
     edge_list = [
         ('a', 'b'),
         ('b', 'c'),
+        ('c1', 'b1'),  # Cycle: c1 -> b1-> a1 -> c1
+        ('b1', 'a1'),
+        ('a1', 'c1'),
         ('c', 'a'),  # Cycle: a -> b -> c -> a
         ('c', 'd'),  # Branch
         ('d', 'd1'),  # Branch
