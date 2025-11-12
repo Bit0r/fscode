@@ -1,4 +1,4 @@
-# 🧩 FSCode (Filename Studio Code) — Manage Your Files with Your Editor
+# 🧩 FSCode (File Studio Code) — Operate files like writing code
 
 [![English](https://img.shields.io/badge/English-blue.svg?style=flat-square)](README.md)
 [![简体中文](https://img.shields.io/badge/简体中文-brightgreen.svg?style=flat-square)](README.zh.md)
@@ -7,8 +7,13 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-default.svg)](https://opensource.org/licenses/MIT)
 [![GitHub Stars](https://img.shields.io/github/stars/bit0r/fscode)](https://github.com/Bit0r/fscode)
 
-> Turn your VS Code / Vim into a file operations IDE.
-> Generate safe, reviewable batch scripts (rename/delete/create/copy/symlink, etc.) from a "visual manifest".
+## 🚀 What Can It Do?
+
+`fscode` can generate a "code text" file containing information about the filenames you pass in. You can then perform file operations directly through your code editor.
+
+## ⚡️ Video Demo (Very Important!!!)
+
+[Video Demo](https://github.com/user-attachments/assets/3edaedec-8364-4a43-9050-cf7fd0f3a8dd)
 
 ## 🏁 Quick Start
 
@@ -17,27 +22,9 @@ pip install PyFSCode
 find ./photos -name "*.jpg" | fscode --editor='code -w' *.txt
 ```
 
-## ⚡️ Video Demo
-
-[Video Demo](https://github.com/user-attachments/assets/3edaedec-8364-4a43-9050-cf7fd0f3a8dd)
-
-## 🤔 Why This Tool?
-
-Batch file operations (rename / delete / create / copy / symlink) are the most common yet error-prone tasks in the command-line world:
-
-- `mv`, `rm`, `cp`, `touch`, `ln`, `ln -s` commands are very clumsy and error-prone for **batch** operations.
-- Manually writing `for` loops and `sed` for renaming carries a heavy mental load.
-- **Swapping filenames** is very complex and often impossible even in a GUI.
-
-`fscode` provides a more powerful and unified solution.
-
-## 🚀 What Can It Do?
-
-`fscode` lets you use your editor to plan batch file operations and safely generate a script for execution.
-
 ## ✨ Core Features
 
-- 💻 **Editor as UI** — Use the powerful features of VS Code/Vim (multi-cursor, regex, macros) to manage files;
+- 💻 **Editor as UI** — Use the code editing capabilities of VS Code/Jetbrains to operate files;
 - 🧠 **Smart Dependency Handling** — Automatically resolves swap, cycle, and move conflicts;
 - 🛡️ **Safe and Controllable** — Does not modify files directly, only generates a reviewable file operation script;
 - 🧰 **Full Features Support** — Supports creation, copying, moving, deleting, renaming and Symlink.
@@ -118,7 +105,7 @@ You just need to modify it:
 # 5. Create (Add a new line, ID is 0, quotes are needed due to spaces)
 0 'new_project/new note.txt'
 
-# 6. 创建符号链接
+# 6. Create a symbolic link
 0 note.txt 'new_project/new note.txt'
 ```
 
@@ -226,26 +213,26 @@ alias -s fscode "fscode --is_exchange --editor='code -w' --create='new' --remove
 ## 🪶 Tips
 
 - To use hard links, you can use `--inode` to display hard link information. Use `--cp='ln -snT'` to replace the cp operation.
-- To use soft links, you can modify the `[args...]` column and set the ID to 0; fscode will then automatically use create_args to create them. If you need to force-create and overwrite, you must manually change `--create_args='ln -snTf'`. Currently, only the "create" function supports custom arguments. If the project gets over 1000 stars ⭐, we will consider adding custom arguments for all operations.
+- To use soft links, you can modify the `[args...]` column and set the ID to 0; fscode will then automatically use create_args to create them. If you need to force-create and overwrite, you must manually change `--create_args='ln -snTf'`. Currently, only the "create" function supports custom arguments. If the project gets 1000 stars ⭐, I will consider adding custom arguments for all operations.
 - To use `sudo`, you can set `--cmd_prefix=sudo`, which will add this prefix to all commands.
 
 ## 🔗 Feature Comparison
 
-|       Tool       | ✅Count | Cross-editor | Interactive | Output Script | Custom Commands | Move  | Swap/Ring | Copy  | Delete | Create |        Symlink         |        Hardlink        |
-| :--------------: | :----: | :----------: | :---------: | :-----------: | :-------------: | :---: | :-------: | :---: | :----: | :----: | :--------------------: | :--------------------: |
-|    [edir][1]     |   5    |      ✅       |      ❌      |       ❌       |        ❌        |   ✅   |     ✅     |   ✅   |   ✅    |   ❌    |           ❌            |           ❌            |
-| [renameutils][2] |   5    |      ✅       |      ❌      |       ❌       |        ✅        |   ✅   |     ✅     |   ✅   |   ❌    |   ❌    |           ❌            |           ❌            |
-| [pipe-rename][3] |   3    |      ✅       |      ❌      |       ❌       |        ❌        |   ✅   |     ✅     |   ❌   |   ❌    |   ❌    |           ❌            |           ❌            |
-|   [massren][4]   |   4    |      ✅       |      ❌      |       ❌       |        ❌        |   ✅   |     ✅     |   ❌   |   ✅    |   ❌    |           ❌            |           ❌            |
-|    [dired][5]    |   9    |      ❌       |      ✅      |       ❌       |        ✅        |   ✅   |     ✅     |   ✅   |   ✅    |   ✅    |           ✅            |           ✅            |
-|    [acme][6]     |   8    |      ❌       |      ✅      |       ❌       |        ✅        |   ✅   |     ❌     |   ✅   |   ✅    |   ✅    | ✅<sup>[1](#Note)</sup> | ✅<sup>[1](#Note)</sup> |
-|     [up][7]      |   3    |      ❌       |      ✅      |       ✅       |        ✅        |   ❌   |     ❌     |   ❌   |   ❌    |   ❌    |           ❌            |           ❌            |
-|      fscode      | **10** |      ✅       |      ❌      |       ✅       |        ✅        |   ✅   |     ✅     |   ✅   |   ✅    |   ✅    |           ✅            | ✅<sup>[2](#Note)</sup> |
+|       Tool       | ✅Count | Cross-editor | Interactive | Output Script | Custom Commands | Move  | Swap/Cycle | Copy  | Delete | Create |        Symlink         |        Hardlink        |
+| :--------------: | :----: | :----------: | :---------: | :-----------: | :-------------: | :---: | :--------: | :---: | :----: | :----: | :--------------------: | :--------------------: |
+|    [edir][1]     |   5    |      ✅       |      ❌      |       ❌       |        ❌        |   ✅   |     ✅      |   ✅   |   ✅    |   ❌    |           ❌            |           ❌            |
+| [renameutils][2] |   5    |      ✅       |      ❌      |       ❌       |        ✅        |   ✅   |     ✅      |   ✅   |   ❌    |   ❌    |           ❌            |           ❌            |
+| [pipe-rename][3] |   3    |      ✅       |      ❌      |       ❌       |        ❌        |   ✅   |     ✅      |   ❌   |   ❌    |   ❌    |           ❌            |           ❌            |
+|   [massren][4]   |   4    |      ✅       |      ❌      |       ❌       |        ❌        |   ✅   |     ✅      |   ❌   |   ✅    |   ❌    |           ❌            |           ❌            |
+|    [dired][5]    |   9    |      ❌       |      ✅      |       ❌       |        ✅        |   ✅   |     ✅      |   ✅   |   ✅    |   ✅    |           ✅            |           ✅            |
+|    [acme][6]     |   8    |      ❌       |      ✅      |       ❌       |        ✅        |   ✅   |     ❌      |   ✅   |   ✅    |   ✅    | ✅<sup>[1](#Note)</sup> | ✅<sup>[1](#Note)</sup> |
+|     [up][7]      |   3    |      ❌       |      ✅      |       ✅       |        ✅        |   ❌   |     ❌      |   ❌   |   ❌    |   ❌    |           ❌            |           ❌            |
+|      fscode      | **10** |      ✅       |      ❌      |       ✅       |        ✅        |   ✅   |     ✅      |   ✅   |   ✅    |   ✅    |           ✅            | ✅<sup>[2](#Note)</sup> |
 
 ###### Note
 
 1. Due to the nature of Plan 9, the system doesn't use "link" but rather "[bind](https://en.wikipedia.org/wiki/Plan_9_from_Bell_Labs#Union_directories_and_namespaces)".
-2. Just set --copy='ln -nTf' and --inode, and you can handle hard links just like regular copying.
+2. Just set `--copy='ln -nTf'` and `--inode`, and you can handle hard links just like regular copying.
 
 [1]: https://github.com/bulletmark/edir
 [2]: https://www.nongnu.org/renameutils/

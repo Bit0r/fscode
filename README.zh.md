@@ -1,4 +1,4 @@
-# 🧩 FSCode (Filename Studio Code) — 用你的编辑器管理文件
+# 🧩 FSCode (File Studio Code) — 像写代码一样操作文件
 
 [![English](https://img.shields.io/badge/English-blue.svg?style=flat-square)](README.md)
 [![简体中文](https://img.shields.io/badge/简体中文-brightgreen.svg?style=flat-square)](README.zh.md)
@@ -7,8 +7,13 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-default.svg)](https://opensource.org/licenses/MIT)
 [![GitHub Stars](https://img.shields.io/github/stars/bit0r/fscode)](https://github.com/Bit0r/fscode)
 
-> 把你的 VS Code / Vim 变成文件操作 IDE。
-> 从“可视化清单”生成安全可审查的批处理脚本（重命名/删除/创建/复制/软链接等）。
+## 🚀 它能做什么？
+
+`fscode` 能根据你传入的文件名生成一份包含这些文件信息的“代码文本”，然后您就可以通过代码编辑器直接进行文件操作。
+
+## ⚡️ 视频演示（非常重要！！！）
+
+![演示视频](https://github.com/user-attachments/assets/3edaedec-8364-4a43-9050-cf7fd0f3a8dd)
 
 ## 🏁 快速开始
 
@@ -17,27 +22,9 @@ pip install PyFSCode
 find ./photos -name "*.jpg" | fscode --editor='code -w' *.txt
 ```
 
-## ⚡️ 视频演示
-
-![演示视频](https://github.com/user-attachments/assets/3edaedec-8364-4a43-9050-cf7fd0f3a8dd)
-
-## 🤔 为什么会有这个工具？
-
-批量文件操作（重命名/删除/复制/创建/软链接）是命令行世界最常见但最易出错的任务：
-
-- `mv`, `rm`, `cp`, `touch`, `ln`, `ln -s` 命令对于**批量**操作非常笨拙且容易出错。
-- 手写 `for` 循环和 `sed` 来重命名，心智负担很重。
-- **交换文件名**非常复杂，甚至在GUI下都无法完成操作。
-
-`fscode` 提供了一个更强大、更统一的解决方案。
-
-## 🚀 它能做什么？
-
-`fscode` 让你用编辑器批量规划文件操作，并安全生成脚本执行。
-
 ## ✨ 核心功能
 
-- 💻 **编辑器即 UI** — 用 VS Code/Vim 的强大功能（多光标、正则、宏）管理文件；
+- 💻 **编辑器即 UI** — 用 VS Code/Jetbrains 的代码编辑能力操作文件；
 - 🧠 **智能依赖处理** — 自动解决交换、循环、移动冲突；
 - 🛡️ **安全可控** — 不直接修改文件，只生成一个可审查的文件操作脚本；
 - 🧰 **全功能支持** — 创建、复制、移动、删除、重命名、软链接都支持。
@@ -245,7 +232,7 @@ alias -s fscode "fscode --is_exchange --editor='code -w' --create='new' --remove
 ###### 注意
 
 1. 由于plan9的特性，该系统并不使用“链接”，而是“[绑定](https://en.wikipedia.org/wiki/Plan_9_from_Bell_Labs#Union_directories_and_namespaces)”
-2. 只需要设置`--copy='ln -nTf'`和`--inode`，那么就能像普通复制一样处理硬链接
+2. 只需要设置 `--copy='ln -nTf'` 和 `--inode` ，那么就能像普通复制一样处理硬链接
 
 [1]: https://github.com/bulletmark/edir
 [2]: https://www.nongnu.org/renameutils/
