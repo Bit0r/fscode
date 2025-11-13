@@ -14,6 +14,26 @@ from rich.console import Console
 
 from .plan import GraphOperationGenerator
 
+platform_cmds = {
+    # remove
+    'rm': {'windows': 'del'},
+    # move
+    'mv': {'windows': 'move'},
+    'mv --exchange': {},
+    # copy
+    'cp': {'windows': 'cpi'},
+    'ln -nT': {
+        'darwin': 'ln -n',
+        'windows': 'ni -Type HardLink -Value',
+    },
+    # create
+    'touch': {'windows': 'ni'},
+    'ln -snT': {
+        'darwin': 'ln -sn',
+        'windows': 'ni -Type SymbolicLink -Value',
+    },
+}
+
 
 class FSCode:
     """
@@ -149,15 +169,17 @@ class FSCode:
         self,
         *paths: str,
         editor: str = os.getenv('VISUAL', os.getenv('EDITOR', 'code -w')),
-        output_script: str | Path = 'file_ops.sh',
+        output_script: str | Path = f'file_ops.{"ps1" if os.name == "nt" else "sh"}',
         edit_suffix='.sh',
         null=False,
-        copy='cp',
-        move='mv',
-        exchange='mv --exchange',
-        remove='rm',
-        create='touch',
-        create_args='ln -snT',
+        copy: str = platform_cmds['cp'].get(sys.platform, 'cp'),
+        move: str = platform_cmds['mv'].get(sys.platform, 'mv'),
+        exchange: str = platform_cmds['mv --exchange'].get(
+            sys.platform, 'mv --exchange'
+        ),
+        remove: str = platform_cmds['rm'].get(sys.platform, 'rm'),
+        create: str = platform_cmds['touch'].get(sys.platform, 'touch'),
+        create_args: str = platform_cmds['ln -snT'].get(sys.platform, 'ln -snT'),
         # creates=('touch', 'new', 'ln -snT'),
         move_tmp_filename: str | None = None,
         is_exchange=False,
@@ -255,18 +277,20 @@ class FSCode:
 
             # 2. Open in editor
             editor_cmd = self._get_editor(editor)
+            edit_cmd = editor_cmd[tmp_path]
+
             prompt_text = f"""
-            Opening temporary file in editor: [cyan]{tmp_path}[/]
+            Opening temporary file in editor: [green]{tmp_path}[/]
+            The running command: [green]{edit_cmd}[/]
             Save and close the editor to continue...
             """
             prompt_text = dedent(prompt_text[1:])
             self._console.print(prompt_text)
 
             # This call blocks until the editor is closed
-            print(editor_cmd[tmp_path])
-            editor_cmd[tmp_path] & FG
+            edit_cmd & FG
 
-            self._console.print('[green]Editor closed. Processing changes...[/]')
+            self._console.print('[yellow]Editor closed. Processing changes...[/]\n')
 
             # 3. Parse the results
             edges = self._parse_edited_file(
@@ -296,7 +320,6 @@ class FSCode:
             # 6. Clean up the temporary file
             if 'tmp_path' in locals() and tmp_path and tmp_path.exists():
                 tmp_path.unlink()
-                self._console.print(f'Cleaned up temporary file: [cyan]{tmp_path}[/]')
 
     def write_script(self, filepath: str | Path, operations: list[list[str]]):
         output_path = Path(filepath)
@@ -322,7 +345,7 @@ class FSCode:
 
         output_path.write_text('\n'.join(script_content) + '\n')
 
-        self._console.print(f'Generated script at [bold green]{output_path}[/]')
+        self._console.print(f'Generated script at [green]{output_path}[/]')
 
 
 def main():
