@@ -1,6 +1,6 @@
 [project]
     name = "PyFSCode"
-    version = "1.0.0"
+    version = "1.0.1"
     description = "Filename Studio Code"
     readme = "README.md"
     authors = [{ name = "Bit0r", email = "nie_wang@outlook.com" }]

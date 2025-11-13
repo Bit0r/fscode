@@ -8,7 +8,7 @@ import tempfile
 from textwrap import dedent
 
 import fire
-from plumbum import CommandNotFound, local
+from plumbum import FG, CommandNotFound, local
 from fastnanoid import generate
 from rich.console import Console
 
@@ -39,7 +39,7 @@ class FSCode:
                 sys.exit(1)
 
             # Try to create a plumbum object from the parsed command.
-            return local[cmd_parts[0]][cmd_parts[1:]]
+            return local[cmd_parts[0]][*cmd_parts[1:]]
         except CommandNotFound:
             # If the command does not exist (e.g., 'code' is not installed), catch the exception and provide a friendly hint.
             prompt_text = f"""
@@ -263,7 +263,8 @@ class FSCode:
             self._console.print(prompt_text)
 
             # This call blocks until the editor is closed
-            editor_cmd(tmp_path)
+            print(editor_cmd[tmp_path])
+            editor_cmd[tmp_path] & FG
 
             self._console.print('[green]Editor closed. Processing changes...[/]')
 
