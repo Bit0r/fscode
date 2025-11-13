@@ -16,21 +16,28 @@ from .plan import GraphOperationGenerator
 
 platform_cmds = {
     # remove
-    'rm': {'windows': 'del'},
+    'rm -IR': {'win32': 'del -Confirm -Recurse'},
     # move
-    'mv': {'windows': 'move'},
-    'mv --exchange': {},
+    'mv -iT': {
+        'darwin': 'mv -i',
+        'win32': 'move -Confirm',
+    },
+    'mv --exchange -iT': {},
     # copy
-    'cp': {'windows': 'cpi'},
-    'ln -nT': {
-        'darwin': 'ln -n',
-        'windows': 'ni -Type HardLink -Value',
+    'cp -iRT': {
+        'darwin': 'cp -iR',
+        'win32': 'cpi -Confirm -Recurse',
+    },
+    'ln -inT': {
+        'darwin': 'ln -in',
+        'win32': 'ni -Confirm -Type HardLink -Value',
     },
     # create
-    'touch': {'windows': 'ni'},
-    'ln -snT': {
-        'darwin': 'ln -sn',
-        'windows': 'ni -Type SymbolicLink -Value',
+    'touch': {'win32': 'ni'},
+    'mkdir -p': {'win32': 'ni -Confirm -Type Directory'},
+    'ln -sinT': {
+        'darwin': 'ln -sinF',
+        'win32': 'ni -Confirm -Type SymbolicLink -Value',
     },
 }
 
@@ -172,15 +179,15 @@ class FSCode:
         output_script: str | Path = f'file_ops.{"ps1" if os.name == "nt" else "sh"}',
         edit_suffix='.sh',
         null=False,
-        copy: str = platform_cmds['cp'].get(sys.platform, 'cp'),
-        move: str = platform_cmds['mv'].get(sys.platform, 'mv'),
-        exchange: str = platform_cmds['mv --exchange'].get(
-            sys.platform, 'mv --exchange'
+        copy: str = platform_cmds['cp -iRT'].get(sys.platform, 'cp -iRT'),
+        move: str = platform_cmds['mv -iT'].get(sys.platform, 'mv -iT'),
+        exchange: str = platform_cmds['mv --exchange -iT'].get(
+            sys.platform, 'mv --exchange -iT'
         ),
-        remove: str = platform_cmds['rm'].get(sys.platform, 'rm'),
+        remove: str = platform_cmds['rm -IR'].get(sys.platform, 'rm -IR'),
         create: str = platform_cmds['touch'].get(sys.platform, 'touch'),
-        create_args: str = platform_cmds['ln -snT'].get(sys.platform, 'ln -snT'),
-        # creates=('touch', 'new', 'ln -snT'),
+        create_args: str = platform_cmds['ln -sinT'].get(sys.platform, 'ln -sinT'),
+        # creates=('touch', 'new', 'mkdir -p', '-sinT'),
         move_tmp_filename: str | None = None,
         is_exchange=False,
         inode=False,
