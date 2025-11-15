@@ -19,7 +19,11 @@
 
 ```bash
 pip install PyFSCode
+
+# Linux/MacOS
 find ./photos -name "*.jpg" | fscode --editor='code -w' *.txt
+# Windows
+ls -Name -Force -Recurse | fscode
 ```
 
 ## ✨ Core Features
@@ -66,7 +70,7 @@ find ./photos -name "*.jpg" | fscode *.jpg *.txt
 ### Method 4: Use Custom Commands (Advanced Users)
 
 ```bash
-fscode --is_exchange --inode --editor='code -w' --create='new' --remove='del' --move='mov' **
+fscode --editor='code -w' --create='new' --remove='del' --move='mov' --exchange='mv --exchange -iT' **
 ```
 
 ## 📄 Step 2: Modify Filenames in the Editor
@@ -134,8 +138,6 @@ source ./file_ops.sh
 # 📄 Help Documentation
 
 ```
-INFO: Showing help with the command 'fscode -- --help'.
-
 NAME
     fscode - Main execution flow.
 
@@ -153,10 +155,9 @@ POSITIONAL ARGUMENTS
 FLAGS
     --editor=EDITOR
         Type: str
-        Default: 'code'
+        Default: 'code -w'
         The editor command to use (e.g., "msedit", "code -w"). Defaults to $VISUAL, $EDITOR, or 'code -w'.
     -o, --output_script=OUTPUT_SCRIPT
-        Type: str | pathlib._local.Path
         Default: 'file_ops.sh'
         Path to write the generated shell script.
     --edit_suffix=EDIT_SUFFIX
@@ -166,36 +167,38 @@ FLAGS
         Default: False
         Whether to use null-separated input.
     --copy=COPY
+        Type: str
         Default: 'cp'
         The command to use for copy operations.
     --move=MOVE
-        Default: 'mv'
+        Type: str
+        Default: 'move -Confirm'
         The command to use for move operations.
     --exchange=EXCHANGE
-        Default: 'mv --exchange'
-        The command to atomically swap filenames. If you modify to a custom command, is_exchange is automatically enabled.
+        Type: str
+        Default: ''
+        The command to use for atomically swap filenames. Currently, only higher versions of Linux support the `mv --exchange -iT` command.
     -r, --remove=REMOVE
-        Default: 'rm'
+        Type: str
+        Default: 'del -Confirm -Recurse'
         The command to use for remove operations.
     --create=CREATE
-        Default: 'touch'
+        Type: str
+        Default: 'ni'
         The command to use for create operations.
     --create_args=CREATE_ARGS
-        Default: 'ln -snT'
+        Type: str
+        Default: 'ni -Confirm...
         The create command with extra arguments (e.g., for symlinks).
     --move_tmp_filename=MOVE_TMP_FILENAME
         Type: Optional[str | None]
         Default: None
         Path for the temporary filename used during cycle move operations.
-    --is_exchange=IS_EXCHANGE
-        Default: False
-        Use swap for circular moves and avoid using temporary files. Currently only higher versions of linux are supported.
-    --inode=INODE
+    -i, --inode=INODE
         Default: False
         Whether to display inode and hard link count. When adding a new row, the Inode and Links columns must be set to None.
     --cmd_prefix=CMD_PREFIX
-        Type: Optional[str | None]
-        Default: None
+        Default: ''
         An optional command prefix to prepend to all commands.
 ```
 
@@ -207,7 +210,7 @@ FLAGS
 ## 🐟 fish alias example
 
 ```sh
-alias -s fscode "fscode --is_exchange --editor='code -w' --create='new' --remove='del' --move='mov'"
+alias -s fscode "fscode --editor='code -w' --create='new' --remove='del' --move='mov' --exchange='mv --exchange -iT'"
 ```
 
 ## 🪶 Tips

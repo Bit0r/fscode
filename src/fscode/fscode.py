@@ -15,6 +15,8 @@ from rich.console import Console
 from .plan import GraphOperationGenerator
 
 platform_cmds = {
+    # editor
+    'code -w': {'nt': 'code.cmd -w'},
     # remove
     'rm -IR': {'win32': 'del -Confirm -Recurse'},
     # move
@@ -26,7 +28,7 @@ platform_cmds = {
     # copy
     'cp -iRT': {
         'darwin': 'cp -iR',
-        'win32': 'cpi -Confirm -Recurse',
+        'win32': 'copy -Confirm -Recurse',
     },
     'ln -inT': {
         'darwin': 'ln -in',
@@ -175,23 +177,23 @@ class FSCode:
     def run(
         self,
         *paths: str,
-        editor: str = os.getenv('VISUAL', os.getenv('EDITOR', 'code -w')),
-        output_script: str | Path = f'file_ops.{"ps1" if os.name == "nt" else "sh"}',
+        editor: str = os.getenv('VISUAL')
+        or os.getenv('EDITOR')
+        or platform_cmds['code -w'].get(os.name)
+        or 'code -w',
+        output_script=f'file_ops.{"ps1" if os.name == "nt" else "sh"}',
         edit_suffix='.sh',
         null=False,
         copy: str = platform_cmds['cp -iRT'].get(sys.platform, 'cp -iRT'),
         move: str = platform_cmds['mv -iT'].get(sys.platform, 'mv -iT'),
-        exchange: str = platform_cmds['mv --exchange -iT'].get(
-            sys.platform, 'mv --exchange -iT'
-        ),
+        exchange: str = '',
         remove: str = platform_cmds['rm -IR'].get(sys.platform, 'rm -IR'),
         create: str = platform_cmds['touch'].get(sys.platform, 'touch'),
         create_args: str = platform_cmds['ln -sinT'].get(sys.platform, 'ln -sinT'),
         # creates=('touch', 'new', 'mkdir -p', '-sinT'),
         move_tmp_filename: str | None = None,
-        is_exchange=False,
         inode=False,
-        cmd_prefix: str | None = None,
+        cmd_prefix='',
         # cmd_tmpl='{PFX} {CMD} {ARGS} {SRC} {DEST}',
         # copy_tmpl='{PFX} {CMD} {ARGS} {SRC} {DEST}',
         # move_tmpl='{PFX} {CMD} {ARGS} {SRC} {DEST}',
@@ -215,14 +217,12 @@ class FSCode:
         :param null: Whether to use null-separated input.
         :param copy: The command to use for copy operations.
         :param move: The command to use for move operations.
-        :param exchange: The command to atomically swap filenames.
-                If you modify to a custom command, is_exchange is automatically enabled.
+        :param exchange: The command to use for atomically swap filenames.
+                Currently, only higher versions of Linux support the `mv --exchange -iT` command.
         :param remove: The command to use for remove operations.
         :param create: The command to use for create operations.
         :param create_args: The create command with extra arguments (e.g., for symlinks).
         :param move_tmp_filename: Path for the temporary filename used during cycle move operations.
-        :param is_exchange: Use swap for circular moves and avoid using temporary files.
-                Currently only higher versions of linux are supported.
         :param inode: Whether to display inode and hard link count.
                 When adding a new row, the Inode and Links columns must be set to None.
         :param cmd_prefix: An optional command prefix to prepend to all commands.
@@ -249,12 +249,10 @@ class FSCode:
             )
             return
 
-        # When the set --exchange parameters, auto enable --is_exchange.
-        if exchange != 'mv --exchange' and not is_exchange:
+        if exchange:
             self._console.print(
-                f"[yellow][NOTE]: --exchange set to '{exchange}'. Automatically enabling --is_exchange=True.[/]"
+                f'[yellow][NOTE]: The {exchange} command will be used to exchange files instead of using temporary files.[/]'
             )
-            is_exchange = True
 
         # Split commands into lists
         cmds = [remove, create, create_args, copy, move, exchange]
@@ -316,8 +314,8 @@ class FSCode:
                 create_args=create_args,
             )
             operations = ops_gen.generate_operations(
-                tmp_name=move_tmp_filename or f'./__tmp__{generate(size=8)}',
-                is_exchange=is_exchange,
+                tmp_name=move_tmp_filename or f'./__{generate(size=8)}__.tmp',
+                is_exchange=bool(exchange),
             )
 
             # 5. Generate and write script
@@ -333,7 +331,7 @@ class FSCode:
         header = f"""
         #!/bin/sh
         # Run this script in the same directory where you ran the original command.
-        # Example: source {filepath}
+        # Example: {'source ' if os.name != 'nt' else '.\\'}{filepath}
         """
         header = dedent(header[1:])
         script_content = [header]
